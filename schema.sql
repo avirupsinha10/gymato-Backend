@@ -1,87 +1,99 @@
-CREATE TYPE ROLE_ENUM AS ENUM ('TRAINEE', 'TRAINER');
+CREATE TYPE public.role AS ENUM ('TRAINEE','TRAINER');
+CREATE TYPE public.order_status AS ENUM ('CREATED', 'ONGOING', 'CANCELLED', 'COMPLETED');
+CREATE TYPE public.payment_method AS ENUM ('CREDIT_CARD', 'DEBIT_CARD', 'COD', 'UPI');
+CREATE TYPE public.transaction_status AS ENUM ('INITIATED', 'PENDING', 'COMPLETED', 'FAILED');
 
-CREATE TABLE users (
-    id UUID PRIMARY KEY,
-    name VARCHAR NOT NULL,
-    email VARCHAR NOT NULL UNIQUE,
-    username VARCHAR NOT NULL UNIQUE,
-    password VARCHAR NOT NULL,
-    phone VARCHAR,
-    address_id UUID,
-    gender VARCHAR,
-    role ROLE_ENUM NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    metadata JSONB
+CREATE TABLE public.users (
+    id character varying NOT NULL PRIMARY KEY,
+    name character varying NOT NULL,
+    email character varying NOT NULL UNIQUE,
+    username character varying NOT NULL UNIQUE,
+    password character varying NOT NULL,
+    phone character varying NOT NULL,
+    address_id character varying,
+    gender character varying,
+    role public.role NOT NULL,
+    created_at timestamp without time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    metadata json
 );
 
--- CREATE TABLE FitnessCentres (
---     id SERIAL PRIMARY KEY,
---     name VARCHAR NOT NULL,
---     current_user_ids INTEGER[], -- Array of user IDs
---     trainer_user_ids INTEGER[], -- Array of user IDs
---     address_id INTEGER,
---     phone VARCHAR,
---     capacity INTEGER,
---     costing INTEGER,
---     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
---     metadata JSONB,
---     FOREIGN KEY (address_id) REFERENCES Address(id)
--- );
+CREATE TABLE public.fitness_centres (
+    id character varying NOT NULL PRIMARY KEY,
+    name character varying NOT NULL,
+    current_user_ids character varying[],
+    trainer_user_ids character varying[],
+    address_id character varying,
+    phone character varying,
+    capacity INTEGER,
+    costing json,
+    created_at timestamp without time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    metadata json
+);
 
--- -- Create the UserRFitnessCentre table
--- CREATE TABLE UserRFitnessCentre (
---     id SERIAL PRIMARY KEY,
---     user_id INTEGER,
---     fitness_centre_id INTEGER,
---     available_fitness_centre_ids INTEGER[], -- Array of fitness centre IDs
---     metadata JSONB,
---     FOREIGN KEY (user_id) REFERENCES Users(id),
---     FOREIGN KEY (fitness_centre_id) REFERENCES FitnessCentres(id)
--- );
+CREATE TABLE public.address (
+    id character varying NOT NULL PRIMARY KEY,
+    user_id character varying,
+    fitness_centre_id character varying,
+    state character varying,
+    city character varying,
+    street character varying,
+    pincode character varying
+);
 
--- -- Create the Orders table
--- CREATE TABLE Orders (
---     id SERIAL PRIMARY KEY,
---     user_r_fitnesscentre_id INTEGER,
---     order_total FLOAT NOT NULL,
---     status ORDER_STATUS NOT NULL,
---     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
---     completed_at TIMESTAMP,
---     FOREIGN KEY (user_r_fitnesscentre_id) REFERENCES UserRFitnessCentre(id)
--- );
+CREATE TABLE public.user_r_fitnesscentre (
+    id character varying NOT NULL PRIMARY KEY,
+    user_id character varying,
+    fitness_centre_id character varying,
+    available_fitness_centre_ids character varying[],
+    metadata json
+);
 
--- -- Create the Transaction table
--- CREATE TABLE Transaction (
---     id SERIAL PRIMARY KEY,
---     order_id INTEGER,
---     payment_method PAYMENT_METHOD NOT NULL,
---     amount FLOAT NOT NULL,
---     status TRANSACTION_STATUS NOT NULL,
---     FOREIGN KEY (order_id) REFERENCES Orders(id)
--- );
+CREATE TABLE public.orders (
+    id character varying NOT NULL PRIMARY KEY,
+    user_r_fitnesscentre_id character varying NOT NULL,
+    order_total FLOAT NOT NULL,
+    status public.order_status NOT NULL,
+    created_at timestamp without time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    completed_at timestamp without time zone
+);
 
--- -- Create the Address table
--- CREATE TABLE Address (
---     id SERIAL PRIMARY KEY,
---     user_id INTEGER,
---     fitness_centre_id INTEGER,
---     state VARCHAR,
---     city VARCHAR,
---     street VARCHAR,
---     pincode INTEGER,
---     FOREIGN KEY (user_id) REFERENCES Users(id),
---     FOREIGN KEY (fitness_centre_id) REFERENCES FitnessCentres(id)
--- );
+CREATE TABLE public.transaction (
+    id character varying NOT NULL PRIMARY KEY,
+    order_id character varying NOT NULL,
+    payment_method public.payment_method NOT NULL,
+    amount FLOAT NOT NULL,
+    status public.transaction_status NOT NULL
+);
 
--- -- Create the Rating table
--- CREATE TABLE Rating (
---     id SERIAL PRIMARY KEY,
---     user_r_fitnesscentre_id INTEGER,
---     rating INTEGER NOT NULL,
---     FOREIGN KEY (user_r_fitnesscentre_id) REFERENCES UserRFitnessCentre(id)
--- );
+CREATE TABLE public.rating (
+    id character varying NOT NULL PRIMARY KEY,
+    user_r_fitnesscentre_id character varying NOT NULL,
+    rating INTEGER
+);
 
--- -- Define ENUM types for roles, statuses, and payment methods
--- CREATE TYPE ORDER_STATUS AS ENUM ('CREATED', 'ONGOING', 'CANCELLED', 'COMPLETED');
--- CREATE TYPE PAYMENT_METHOD AS ENUM ('CREDIT_CARD', 'DEBIT_CARD', 'PAYPAL', 'BANK_TRANSFER');
--- CREATE TYPE TRANSACTION_STATUS AS ENUM ('PENDING', 'COMPLETED', 'FAILED');
+ALTER TABLE ONLY public.users
+    ADD CONSTRAINT "user_addressId_fkey" FOREIGN KEY ("address_id") REFERENCES public.address(id);
+
+ALTER TABLE ONLY public.fitness_centres
+    ADD CONSTRAINT "fitnessCentres_addressId_fkey" FOREIGN KEY ("address_id") REFERENCES public.address(id);
+
+ALTER TABLE ONLY public.address
+    ADD CONSTRAINT "address_userId_fkey" FOREIGN KEY ("user_id") REFERENCES public.users(id);
+
+ALTER TABLE ONLY public.address
+    ADD CONSTRAINT "address_fitnessCentreId_fkey" FOREIGN KEY ("fitness_centre_id") REFERENCES public.fitness_centres(id);
+
+ALTER TABLE ONLY public.user_r_fitnesscentre
+    ADD CONSTRAINT "userRFitnessCentre_userId_fkey" FOREIGN KEY ("user_id") REFERENCES public.users(id);
+
+ALTER TABLE ONLY public.user_r_fitnesscentre
+    ADD CONSTRAINT "userRFitnessCentre_fitnessCentreId_fkey" FOREIGN KEY ("fitness_centre_id") REFERENCES public.fitness_centres(id);
+
+ALTER TABLE ONLY public.orders
+    ADD CONSTRAINT "orders_userRFitnessCentreId_fkey" FOREIGN KEY ("user_r_fitnesscentre_id") REFERENCES public.user_r_fitnesscentre(id);
+
+ALTER TABLE ONLY public.transaction
+    ADD CONSTRAINT "transaction_orderId_fkey" FOREIGN KEY ("order_id") REFERENCES public.orders(id);
+
+ALTER TABLE ONLY public.rating
+    ADD CONSTRAINT "rating_userRFitnesscentreId_fkey" FOREIGN KEY ("user_r_fitnesscentre_id") REFERENCES public.user_r_fitnesscentre(id);
