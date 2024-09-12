@@ -23,7 +23,7 @@ CREATE TABLE public.fitness_centres (
     current_user_ids character varying[],
     trainer_user_ids character varying[],
     address_id character varying,
-    phone character varying,
+    phone character varying NOT NULL,
     capacity INTEGER,
     costing json,
     created_at timestamp without time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,

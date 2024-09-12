@@ -23,3 +23,15 @@ password: "root"
 2. \c gymdb
 
 use sqls
+
+-- Reset Local pg db
+DROP SCHEMA public CASCADE;
+CREATE SCHEMA public;
+
+GRANT ALL ON SCHEMA public TO postgres;
+GRANT ALL ON SCHEMA public TO public;
+
+
+Android studio
+cd usr/local/android-studio/bin
+./studio.sh
