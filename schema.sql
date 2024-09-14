@@ -6,9 +6,9 @@ CREATE TYPE public.transaction_status AS ENUM ('INITIATED', 'PENDING', 'COMPLETE
 CREATE TABLE public.users (
     id character varying NOT NULL PRIMARY KEY,
     name character varying NOT NULL,
-    email character varying NOT NULL UNIQUE,
-    username character varying NOT NULL UNIQUE,
-    password character varying NOT NULL,
+    username character varying NOT NULL,
+    email character varying UNIQUE,
+    password character varying,
     phone character varying NOT NULL,
     address_id character varying,
     gender character varying,
@@ -43,6 +43,7 @@ CREATE TABLE public.address (
 CREATE TABLE public.user_r_fitnesscentre (
     id character varying NOT NULL PRIMARY KEY,
     user_id character varying,
+    status character varying,
     fitness_centre_id character varying,
     available_fitness_centre_ids character varying[],
     metadata json

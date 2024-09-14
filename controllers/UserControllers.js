@@ -16,18 +16,19 @@ const getListOfAllUsers = async (req,res,next) => {
 const registerUser = async (req,res,next) => {
     try {
         const uid = uuidv4();
-        const {role,username,email,password} = req.body;
+        const {role,phone,username,email,password} = req.body;
         const usersList = await pool.query("SELECT * FROM users");
         const hasUser = usersList.rows.find(u => u.username === username);
         if(hasUser) {
             throw new HttpError('Could not create user username already exists.',401);
         }
-        const newUser = await pool.query("INSERT INTO public.users (id,role,username,name,email,password) VALUES ($1,$2,$3,$4,$5,$6) RETURNING *",
-        [uid,role,username,username,email,password]);
+        const newUser = await pool.query("INSERT INTO public.users (id,role,username,name,email,password,phone) VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING *",
+        [uid,role,username,username,email,password,phone]);
         res.status(201).json(newUser.rows[0]);
 
     } catch (err) {
         console.log(err.message);
+        res.status(400).json({"errorMessage" : err.message});
     }
 };
 
